@@ -3,27 +3,32 @@
 #include <stdlib.h>
 #include <GLUT/glut.h>
 
-const double s = 0.1;
+const double s = 1.0;
+unsigned char bitmap[8]; // 8*8
 
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  double d = sqrt(1.0 / 3);
-  gluLookAt(d, d, d, // camera position, 1 away from origin
+  double d = 10 / sqrt(3);
+  gluLookAt(d, d, d, // camera position, 10 away from origin
 	    0, 0, 0, // origin is at center
 	    0, 0, 1  // z-axis is upwards
 	    );
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-1, 1,
-	  -1, 1,
-	  s, 1000
+  glOrtho(-10, 10,
+	  -10, 10,
+	  1, 20
 	  );
 }
 
 void init() {
   srand(time(NULL));
+
+  int x, y;
+  for (y = 0; y < 8; y++)
+    bitmap[y] = (unsigned char)rand();
 
   glEnable(GL_DEPTH_TEST);
 
@@ -40,17 +45,17 @@ void display() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
-  int n = 5, x, y;
-  glTranslated(-n * s, -n * s, 0);
-  for (y = -n; y <= n; y++) {
+  int x, y;
+  glTranslated(-3.5, -3.5, 0);
+  for (y = 0; y < 8; y++) {
     glPushMatrix();
-    for (x = -n; x <= n; x++) {
-      if (rand() % 2)
-	glutSolidCube(s);
-      glTranslated(s, 0, 0);
+    for (x = 0; x < 8; x++) {
+      if (bitmap[y] & (1 << x))
+	glutSolidCube(1);
+      glTranslated(1, 0, 0);
     }
     glPopMatrix();
-    glTranslated(0, s, 0);
+    glTranslated(0, 1, 0);
   }
 
   glPopMatrix();
@@ -59,20 +64,29 @@ void display() {
 
 void mouse(int button, int state, int u, int v) {
   if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-    double model[16], projection[16], near[3], far[3];
+    double model[16], projection[16], x, y, z;
     int viewport[4];
+    float depth;
+
     glGetDoublev(GL_MODELVIEW_MATRIX, model);
     glGetDoublev(GL_PROJECTION_MATRIX, projection);
     glGetIntegerv(GL_VIEWPORT, viewport);
-    gluUnProject(u, v, 0,
-		 model, projection, viewport,
-		 near + 0, near + 1, near + 2);
-    gluUnProject(u, v, 1,
-		 model, projection, viewport,
-		 far + 0, far + 1, far + 2);
 
-    printf("%f %f %f\n", near[0], near[1], near[2]);
-    printf("%f %f %f\n", far[0], far[1], far[2]);
+    v = viewport[3] - v;
+
+    glReadPixels(u, v, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
+    gluUnProject(u, v, depth,
+		 model, projection, viewport,
+		 &x, &y, &z);
+    printf("%f %f %f\n", x, y, z);
+
+    x += 4;
+    y += 4;
+    if (z < 1 && x >= 0 && x < 8 && y >= 0 && y < 8)
+      bitmap[(int)y] ^= 1 << (int)x;
+
+    glutPostRedisplay();
   }
 }
 
