@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <GLUT/glut.h>
 
-const double s = 1.0;
-unsigned char bitmap[8]; // 8*8
+unsigned char bitmap[8]; // 8x8 boolean grid
 
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
@@ -19,8 +18,14 @@ void isometric() {
   glLoadIdentity();
   glOrtho(-10, 10,
 	  -10, 10,
-	  1, 20
-	  );
+	  1, 20);
+}
+
+// where does the line through p and q interecept the plane z=0?
+void intercept(double *p, double *q, double *x, double *y) {
+  double t = p[2] / (p[2] - q[2]); // (1-t)*p + t*q = 0 <=> p - t*p + t*q = 0 <=> t = p/(p-q)
+  *x = (1 - t) * p[0] + t * q[0];
+  *y = (1 - t) * p[1] + t * q[1];
 }
 
 void init() {
@@ -64,7 +69,7 @@ void display() {
 
 void mouse(int button, int state, int u, int v) {
   if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-    double model[16], projection[16], x, y, z;
+    double model[16], projection[16], x, y, z, near[3], far[3];
     int viewport[4];
     float depth;
 
@@ -76,10 +81,23 @@ void mouse(int button, int state, int u, int v) {
 
     glReadPixels(u, v, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 
-    gluUnProject(u, v, depth,
-		 model, projection, viewport,
-		 &x, &y, &z);
-    printf("%f %f %f\n", x, y, z);
+    if (depth < 1) {
+      gluUnProject(u, v, depth,
+		   model, projection, viewport,
+		   &x, &y, &z);
+      printf("%f %f %f\n", x, y, z);
+    }
+    else {
+      gluUnProject(u, v, 0,
+		   model, projection, viewport,
+		   near + 0, near + 1, near + 2);
+      gluUnProject(u, v, depth,
+		   model, projection, viewport,
+		   far + 0, far + 1, far + 2);
+      intercept(near, far, &x, &y);
+      z = 0;
+      printf("%f %f\n", x, y);
+    }
 
     x += 4;
     y += 4;
