@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <GLUT/glut.h>
 
-unsigned char bitmap[8]; // 8x8 boolean grid
+const int W = 8, H = 8, Z = 8;
+unsigned char *map;
 
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
@@ -31,9 +32,10 @@ void intercept(double *p, double *q, double *x, double *y) {
 void init() {
   srand(time(NULL));
 
-  int x, y;
-  for (y = 0; y < 8; y++)
-    bitmap[y] = (unsigned char)rand();
+  map = malloc(W * H);
+  int i;
+  for (i = 0; i < W * H; i++)
+    map[i] = rand() % (Z / 2);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -51,16 +53,16 @@ void display() {
   glPushMatrix();
 
   int x, y;
-  glTranslated(-3.5, -3.5, 0);
-  for (y = 0; y < 8; y++) {
-    glPushMatrix();
-    for (x = 0; x < 8; x++) {
-      if (bitmap[y] & (1 << x))
+  glTranslated(-0.5 * (W - 1), -0.5 * (H - 1), 0);
+  for (y = 0; y < H; y++) {
+    for (x = 0; x < W; x++) {
+      if (map[y*W + x]) {
+	glPushMatrix();
+	glTranslated(x, y, map[y*W + x]);
 	glutSolidCube(1);
-      glTranslated(1, 0, 0);
+	glPopMatrix();
+      }
     }
-    glPopMatrix();
-    glTranslated(0, 1, 0);
   }
 
   glPopMatrix();
@@ -86,6 +88,11 @@ void mouse(int button, int state, int u, int v) {
 		   model, projection, viewport,
 		   &x, &y, &z);
       printf("%f %f %f\n", x, y, z);
+
+      x += 0.5 * W;
+      y += 0.5 * H;
+      if (x >= 0 && x < W && y >= 0 && y < H)
+	map[(int)y] ^= 1 << (int)x;
     }
     else {
       gluUnProject(u, v, 0,
@@ -98,11 +105,6 @@ void mouse(int button, int state, int u, int v) {
       z = 0;
       printf("%f %f\n", x, y);
     }
-
-    x += 4;
-    y += 4;
-    if (z < 1 && x >= 0 && x < 8 && y >= 0 && y < 8)
-      bitmap[(int)y] ^= 1 << (int)x;
 
     glutPostRedisplay();
   }
