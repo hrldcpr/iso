@@ -3,22 +3,22 @@
 #include <stdlib.h>
 #include <GLUT/glut.h>
 
-typedef struct cube {
+typedef struct Cube {
   int x;
   int y;
   int z;
-  struct cube *next;
-} cube;
+  struct Cube *next;
+} Cube;
 
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
 
-cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
+Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
 int mouse_x, mouse_y;
 char dragging = 0;
 
 
 void add_cube(int x, int y, int z) {
-  cube *cube = malloc(sizeof(struct cube));
+  Cube *cube = malloc(sizeof(Cube));
   cube->x = x;
   cube->y = y;
   cube->z = z;
@@ -52,8 +52,8 @@ void intercept(double *p, double *q, double *x, double *y) {
 void init() {
   srand(time(NULL));
 
-  int n = rand() % 16;
-  cube *next;
+  int n = 16;
+  Cube *next;
   while (n-- > 0)
     add_cube(rand() % WIDTH,
 	     rand() % HEIGHT,
@@ -76,7 +76,7 @@ void display() {
 
   int i;
   glTranslated(-0.5 * (WIDTH - 1), -0.5 * (HEIGHT - 1), -0.5 * (DEPTH - 1));
-  cube *cube = cubes;
+  Cube *cube = cubes;
   while (cube != NULL) {
     glPushMatrix();
     glTranslated(cube->x, cube->y, cube->z);
@@ -129,7 +129,7 @@ void mouse(int button, int state, int u, int v) {
 	y += 0.5 * HEIGHT;
 	z += 0.5 * DEPTH;
 
-	cube **prev = &cubes, *next = *prev;
+	Cube **prev = &cubes, *next = *prev;
 	while (next != NULL) {
 	  if (next->x == (int)x && next->y == (int)y && next->z == (int)z)
 	    break;
