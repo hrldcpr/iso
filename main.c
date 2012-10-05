@@ -74,10 +74,10 @@ void display() {
   for (i = 0; i < 6; i++) {
     glTranslated(1, 1, 1);
     glutSolidCube(1);
-    glPushMatrix();
-    glTranslated(0, 0, 0.7);
-    glutSolidCube(0.2);
-    glPopMatrix();
+    /* glPushMatrix(); */
+    /* glTranslated(0, 0, 0.7); */
+    /* glutSolidCube(0.2); */
+    /* glPopMatrix(); */
   }
 
   glPopMatrix();
@@ -104,18 +104,12 @@ void mouse(int button, int state, int u, int v) {
 
 	glReadPixels(u, v, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 
-	if (depth < 1) {
+	if (depth > 0 && depth < 1) { // not clipped
 	  gluUnProject(u, v, depth,
 		       model, projection, viewport,
 		       &x, &y, &z);
-	  printf("%f %f %f\n", x, y, z);
-
-	  x += 0.5 * W;
-	  y += 0.5 * H;
-	  if (x >= 0 && x < W && y >= 0 && y < H)
-	    map[(int)y] ^= 1 << (int)x;
 	}
-	else {
+	else { // clipped or empty
 	  gluUnProject(u, v, 0,
 		       model, projection, viewport,
 		       near + 0, near + 1, near + 2);
@@ -124,8 +118,12 @@ void mouse(int button, int state, int u, int v) {
 		       far + 0, far + 1, far + 2);
 	  intercept(near, far, &x, &y);
 	  z = 0;
-	  printf("%f %f\n", x, y);
 	}
+
+	x += 0.5 * W;
+	y += 0.5 * H;
+	if (x >= 0 && x < W && y >= 0 && y < H)
+	  map[(int)y*W + (int)x] ^= 1;
       }
 
       dragging = 0;
