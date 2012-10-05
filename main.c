@@ -14,12 +14,13 @@ typedef struct Ball {
   double x;
   double y;
   double z;
+  Cube *cube;
   struct Ball *next;
 } Ball;
 
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
 const double RADIUS = 0.2;
-const double VELOCITY = 1; // per second
+const double VELOCITY = 0.1; // per second
 
 Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
 Ball *balls = NULL;
@@ -36,13 +37,22 @@ void add_cube(int x, int y, int z) {
   cubes = cube;
 }
 
-void add_ball(double x, double y, double z) {
+void add_ball(double x, double y, double z, Cube *cube) {
   Ball *ball = malloc(sizeof(Ball));
   ball->x = x;
   ball->y = y;
   ball->z = z;
+  ball->cube = cube;
   ball->next = balls;
   balls = ball;
+}
+
+void add_ball_at(double x, double y, double z) {
+  add_ball(x, y, z, NULL);
+}
+
+void add_ball_on(Cube *cube) {
+  add_ball(cube->x, cube->y, cube->z, cube);
 }
 
 void isometric() {
@@ -71,15 +81,12 @@ void intercept(double *p, double *q, double *x, double *y) {
 void init() {
   srand(time(NULL));
 
-  int n = rand() % 32;
+  int n = 16; //rand() % 32;
   while (n-- > 0) {
     add_cube(rand()%WIDTH - WIDTH/2,
 	     rand()%HEIGHT - HEIGHT/2,
 	     rand()%DEPTH - DEPTH/2);
-
-    add_ball(cubes->x,
-	     cubes->y,
-	     cubes->z);
+    add_ball_on(cubes);
   }
 
   glEnable(GL_DEPTH_TEST);
@@ -98,7 +105,7 @@ void display() {
   glPushMatrix();
 
   Cube *cube = cubes;
-  while (cube != NULL) {
+  while (cube) {
     glPushMatrix();
     glTranslated(cube->x, cube->y, cube->z);
     glutSolidCube(1);
@@ -109,7 +116,7 @@ void display() {
   // TODO disable depth buffer before writing balls?
   glTranslated(0, 0, 0.5 + RADIUS); // spheres sit on top of cubes
   Ball *ball = balls;
-  while (ball != NULL) {
+  while (ball) {
     glPushMatrix();
     glTranslated(ball->x, ball->y, ball->z);
     glutSolidSphere(RADIUS, 10, 10);
@@ -162,13 +169,13 @@ void mouse(int button, int state, int u, int v) {
 	y = round(y);
 	z = round(z);
 	Cube **prev = &cubes, *next = *prev;
-	while (next != NULL) {
+	while (next) {
 	  if (next->x == x && next->y == y && next->z == z)
 	    break;
 	  prev = &next->next;
 	  next = *prev;
 	}
-	if (next != NULL) // hit
+	if (next) // hit
 	  *prev = next->next; // remove from list
 	else
 	  add_cube(x, y, z);
@@ -199,13 +206,38 @@ void idle() {
   if (prev_time != -1) {
     long dt = t - prev_time;
 
+    int x, y, z;
+    Cube *cube;
     Ball *ball = balls;
-    while (ball != NULL) {
-      ball->x += VELOCITY * dt * 0.001;
-      //ball->y += VELOCITY * dt * 0.001;
-      //ball->z += VELOCITY * dt * 0.001;
+    while (ball) {
+      x = round(ball->x);
+      y = round(ball->y);
+      z = round(ball->z);
+
+      if (ball->cube)
+	// balls on cubes move sideways #factoflife
+	ball->x += VELOCITY * dt * 0.001;
+      else
+	// balls in space fall #factofspace
+	ball->z -= VELOCITY * dt * 0.001;
+
+      if (x != round(ball->x) || y != round(ball->y) || z != round(ball->z)) {
+	// we moved enough to be on a new cube, so check if we are
+	x = round(ball->x);
+	y = round(ball->y);
+	z = round(ball->z);
+	cube = cubes;
+	while (cube) {
+	  if (x == cube->x && y == cube->y && z == cube->z)
+	    break;
+	  cube = cube->next;
+	}
+	ball->cube = cube;
+      }
+
       ball = ball->next;
     }
+
     glutPostRedisplay();
   }
   prev_time = t;
