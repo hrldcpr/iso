@@ -127,8 +127,9 @@ void mouse(int button, int state, int u, int v) {
 	y = round(y);
 	z = round(z);
 	Cube **prev = &cubes, *next = *prev;
-	while (next != NULL
-	       && !(next->x == x && next->y == y && next->z == z)) {
+	while (next != NULL) {
+	  if (next->x == x && next->y == y && next->z == z)
+	    break;
 	  prev = &next->next;
 	  next = *prev;
 	}
