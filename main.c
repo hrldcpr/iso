@@ -52,12 +52,11 @@ void intercept(double *p, double *q, double *x, double *y) {
 void init() {
   srand(time(NULL));
 
-  int n = 16;
-  Cube *next;
+  int n = rand() % 32;
   while (n-- > 0)
-    add_cube(rand() % WIDTH,
-	     rand() % HEIGHT,
-	     rand() % DEPTH);
+    add_cube(rand()%WIDTH - WIDTH/2,
+	     rand()%HEIGHT - HEIGHT/2,
+	     rand()%DEPTH - DEPTH/2);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -74,8 +73,6 @@ void display() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
-  int i;
-  glTranslated(-0.5 * (WIDTH - 1), -0.5 * (HEIGHT - 1), -0.5 * (DEPTH - 1));
   Cube *cube = cubes;
   while (cube != NULL) {
     glPushMatrix();
@@ -107,7 +104,8 @@ void mouse(int button, int state, int u, int v) {
 
 	v = viewport[3] - v;
 
-	glReadPixels(u, v, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+	glReadPixels(u, v, 1, 1, // the 1x1 rect at (u,v)
+		     GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 
 	if (depth > 0 && depth < 1) { // not clipped
 	  gluUnProject(u, v, depth,
@@ -118,28 +116,26 @@ void mouse(int button, int state, int u, int v) {
 	  gluUnProject(u, v, 0,
 		       model, projection, viewport,
 		       near + 0, near + 1, near + 2);
-	  gluUnProject(u, v, depth,
+	  gluUnProject(u, v, 1,
 		       model, projection, viewport,
 		       far + 0, far + 1, far + 2);
 	  intercept(near, far, &x, &y);
 	  z = 0;
 	}
 
-	x += 0.5 * WIDTH;
-	y += 0.5 * HEIGHT;
-	z += 0.5 * DEPTH;
-
+	x = round(x);
+	y = round(y);
+	z = round(z);
 	Cube **prev = &cubes, *next = *prev;
-	while (next != NULL) {
-	  if (next->x == (int)x && next->y == (int)y && next->z == (int)z)
-	    break;
+	while (next != NULL
+	       && !(next->x == x && next->y == y && next->z == z)) {
 	  prev = &next->next;
 	  next = *prev;
 	}
 	if (next != NULL) // hit
 	  *prev = next->next; // remove from list
 	else
-	  add_cube((int)x, (int)y, (int)z);
+	  add_cube(x, y, z);
       }
 
       dragging = 0;
