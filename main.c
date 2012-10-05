@@ -5,6 +5,8 @@
 
 const int W = 8, H = 8, Z = 8;
 unsigned char *map;
+int mouseX = -1, mouseY = -1;
+double deltaX = 0, deltaY = 0;
 
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
@@ -35,7 +37,7 @@ void init() {
   map = malloc(W * H);
   int i;
   for (i = 0; i < W * H; i++)
-    map[i] = rand() % (Z / 2);
+    map[i] = rand() % 2; //(Z / 2);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -63,6 +65,18 @@ void display() {
 	glPopMatrix();
       }
     }
+  }
+
+  // staircase:
+  int i;
+  for (i = 0; i < 6; i++) {
+    glTranslated(-deltaX / 6.0, -deltaY / 6.0, 0);
+    glTranslated(1, 1, 1);
+    glutSolidCube(1);
+    glPushMatrix();
+    glTranslated(0, 0, 0.7);
+    glutSolidCube(0.2);
+    glPopMatrix();
   }
 
   glPopMatrix();
@@ -110,6 +124,21 @@ void mouse(int button, int state, int u, int v) {
   }
 }
 
+void motion(int u, int v) {
+  if (mouseX != -1 || mouseY != -1) {
+    // not the initial motion
+    glMatrixMode(GL_MODELVIEW);
+    glTranslated((mouseX - u) / 10.0, (v - mouseY) / 10.0, 0);
+
+    deltaX += (mouseX - u) / 10.0;
+    deltaY += (v - mouseY) / 10.0;
+
+    glutPostRedisplay();
+  }
+  mouseX = u;
+  mouseY = v;
+}
+
 int main(int argc, char **argv) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
@@ -119,6 +148,7 @@ int main(int argc, char **argv) {
   init();
   glutDisplayFunc(display);
   glutMouseFunc(mouse);
+  glutPassiveMotionFunc(motion);
 
   glutMainLoop();
   return 0;
