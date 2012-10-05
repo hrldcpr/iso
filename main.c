@@ -10,12 +10,22 @@ typedef struct Cube {
   struct Cube *next;
 } Cube;
 
+typedef struct Ball {
+  double x;
+  double y;
+  double z;
+  struct Ball *next;
+} Ball;
+
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
+const double RADIUS = 0.2;
+const double VELOCITY = 1; // per second
 
 Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
+Ball *balls = NULL;
 int mouse_x, mouse_y;
 char dragging = 0;
-
+long prev_time = -1;
 
 void add_cube(int x, int y, int z) {
   Cube *cube = malloc(sizeof(Cube));
@@ -24,6 +34,15 @@ void add_cube(int x, int y, int z) {
   cube->z = z;
   cube->next = cubes;
   cubes = cube;
+}
+
+void add_ball(double x, double y, double z) {
+  Ball *ball = malloc(sizeof(Ball));
+  ball->x = x;
+  ball->y = y;
+  ball->z = z;
+  ball->next = balls;
+  balls = ball;
 }
 
 void isometric() {
@@ -53,10 +72,15 @@ void init() {
   srand(time(NULL));
 
   int n = rand() % 32;
-  while (n-- > 0)
+  while (n-- > 0) {
     add_cube(rand()%WIDTH - WIDTH/2,
 	     rand()%HEIGHT - HEIGHT/2,
 	     rand()%DEPTH - DEPTH/2);
+
+    add_ball(cubes->x,
+	     cubes->y,
+	     cubes->z);
+  }
 
   glEnable(GL_DEPTH_TEST);
 
@@ -80,6 +104,17 @@ void display() {
     glutSolidCube(1);
     glPopMatrix();
     cube = cube->next;
+  }
+
+  // TODO disable depth buffer before writing balls?
+  glTranslated(0, 0, 0.5 + RADIUS); // spheres sit on top of cubes
+  Ball *ball = balls;
+  while (ball != NULL) {
+    glPushMatrix();
+    glTranslated(ball->x, ball->y, ball->z);
+    glutSolidSphere(RADIUS, 10, 10);
+    glPopMatrix();
+    ball = ball->next;
   }
 
   glPopMatrix();
@@ -159,6 +194,23 @@ void motion(int u, int v) {
   }
 }
 
+void idle() {
+  long t = glutGet(GLUT_ELAPSED_TIME);
+  if (prev_time != -1) {
+    long dt = t - prev_time;
+
+    Ball *ball = balls;
+    while (ball != NULL) {
+      ball->x += VELOCITY * dt * 0.001;
+      //ball->y += VELOCITY * dt * 0.001;
+      //ball->z += VELOCITY * dt * 0.001;
+      ball = ball->next;
+    }
+    glutPostRedisplay();
+  }
+  prev_time = t;
+}
+
 int main(int argc, char **argv) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
@@ -169,6 +221,7 @@ int main(int argc, char **argv) {
   glutDisplayFunc(display);
   glutMouseFunc(mouse);
   glutMotionFunc(motion);
+  glutIdleFunc(idle);
 
   glutMainLoop();
   return 0;
