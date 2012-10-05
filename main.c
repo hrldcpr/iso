@@ -3,12 +3,28 @@
 #include <stdlib.h>
 #include <GLUT/glut.h>
 
-const int W = 8, H = 8, Z = 8;
-unsigned char *map;
+typedef struct cube {
+  int x;
+  int y;
+  int z;
+  struct cube *next;
+} cube;
 
-int mouseX, mouseY;
+const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
+
+cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
+int mouse_x, mouse_y;
 char dragging = 0;
 
+
+void add_cube(int x, int y, int z) {
+  cube *cube = malloc(sizeof(struct cube));
+  cube->x = x;
+  cube->y = y;
+  cube->z = z;
+  cube->next = cubes;
+  cubes = cube;
+}
 
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
@@ -36,10 +52,12 @@ void intercept(double *p, double *q, double *x, double *y) {
 void init() {
   srand(time(NULL));
 
-  map = malloc(W * H);
-  int i;
-  for (i = 0; i < W * H; i++)
-    map[i] = rand() % 2; //(Z / 2);
+  int n = rand() % 16;
+  cube *next;
+  while (n-- > 0)
+    add_cube(rand() % WIDTH,
+	     rand() % HEIGHT,
+	     rand() % DEPTH);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -56,28 +74,15 @@ void display() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
-  int x, y;
-  glTranslated(-0.5 * (W - 1), -0.5 * (H - 1), 0);
-  for (y = 0; y < H; y++) {
-    for (x = 0; x < W; x++) {
-      if (map[y*W + x]) {
-	glPushMatrix();
-	glTranslated(x, y, map[y*W + x]);
-	glutSolidCube(1);
-	glPopMatrix();
-      }
-    }
-  }
-
-  // staircase:
   int i;
-  for (i = 0; i < 6; i++) {
-    glTranslated(1, 1, 1);
+  glTranslated(-0.5 * (WIDTH - 1), -0.5 * (HEIGHT - 1), -0.5 * (DEPTH - 1));
+  cube *cube = cubes;
+  while (cube != NULL) {
+    glPushMatrix();
+    glTranslated(cube->x, cube->y, cube->z);
     glutSolidCube(1);
-    /* glPushMatrix(); */
-    /* glTranslated(0, 0, 0.7); */
-    /* glutSolidCube(0.2); */
-    /* glPopMatrix(); */
+    glPopMatrix();
+    cube = cube->next;
   }
 
   glPopMatrix();
@@ -87,8 +92,8 @@ void display() {
 void mouse(int button, int state, int u, int v) {
   if (button == GLUT_LEFT_BUTTON) {
     if (state == GLUT_DOWN) {
-      mouseX = u;
-      mouseY = v;
+      mouse_x = u;
+      mouse_y = v;
     }
     else if (state == GLUT_UP) {
       if (!dragging) {
@@ -120,10 +125,21 @@ void mouse(int button, int state, int u, int v) {
 	  z = 0;
 	}
 
-	x += 0.5 * W;
-	y += 0.5 * H;
-	if (x >= 0 && x < W && y >= 0 && y < H)
-	  map[(int)y*W + (int)x] ^= 1;
+	x += 0.5 * WIDTH;
+	y += 0.5 * HEIGHT;
+	z += 0.5 * DEPTH;
+
+	cube **prev = &cubes, *next = *prev;
+	while (next != NULL) {
+	  if (next->x == (int)x && next->y == (int)y && next->z == (int)z)
+	    break;
+	  prev = &next->next;
+	  next = *prev;
+	}
+	if (next != NULL) // hit
+	  *prev = next->next; // remove from list
+	else
+	  add_cube((int)x, (int)y, (int)z);
       }
 
       dragging = 0;
@@ -134,15 +150,15 @@ void mouse(int button, int state, int u, int v) {
 }
 
 void motion(int u, int v) {
-  if (u != mouseX || v != mouseY) {
+  if (u != mouse_x || v != mouse_y) {
     dragging = 1;
 
     glMatrixMode(GL_MODELVIEW);
-    glRotatef(u - mouseX, 0, 0, 1);
+    glRotatef(u - mouse_x, 0, 0, 1);
     glutPostRedisplay();
 
-    mouseX = u;
-    mouseY = v;
+    mouse_x = u;
+    mouse_y = v;
   }
 }
 
