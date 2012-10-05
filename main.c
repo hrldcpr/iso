@@ -5,8 +5,10 @@
 
 const int W = 8, H = 8, Z = 8;
 unsigned char *map;
-int mouseX = -1, mouseY = -1;
-double deltaX = 0, deltaY = 0;
+
+int mouseX, mouseY;
+char dragging = 0;
+
 
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
@@ -70,7 +72,6 @@ void display() {
   // staircase:
   int i;
   for (i = 0; i < 6; i++) {
-    glTranslated(-deltaX / 6.0, -deltaY / 6.0, 0);
     glTranslated(1, 1, 1);
     glutSolidCube(1);
     glPushMatrix();
@@ -84,40 +85,50 @@ void display() {
 }
 
 void mouse(int button, int state, int u, int v) {
-  if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-    double model[16], projection[16], x, y, z, near[3], far[3];
-    int viewport[4];
-    float depth;
-
-    glGetDoublev(GL_MODELVIEW_MATRIX, model);
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    v = viewport[3] - v;
-
-    glReadPixels(u, v, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-
-    if (depth < 1) {
-      gluUnProject(u, v, depth,
-		   model, projection, viewport,
-		   &x, &y, &z);
-      printf("%f %f %f\n", x, y, z);
-
-      x += 0.5 * W;
-      y += 0.5 * H;
-      if (x >= 0 && x < W && y >= 0 && y < H)
-	map[(int)y] ^= 1 << (int)x;
+  if (button == GLUT_LEFT_BUTTON) {
+    if (state == GLUT_DOWN) {
+      mouseX = u;
+      mouseY = v;
     }
-    else {
-      gluUnProject(u, v, 0,
-		   model, projection, viewport,
-		   near + 0, near + 1, near + 2);
-      gluUnProject(u, v, depth,
-		   model, projection, viewport,
-		   far + 0, far + 1, far + 2);
-      intercept(near, far, &x, &y);
-      z = 0;
-      printf("%f %f\n", x, y);
+    else if (state == GLUT_UP) {
+      if (!dragging) {
+	double model[16], projection[16], x, y, z, near[3], far[3];
+	int viewport[4];
+	float depth;
+
+	glGetDoublev(GL_MODELVIEW_MATRIX, model);
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	v = viewport[3] - v;
+
+	glReadPixels(u, v, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
+	if (depth < 1) {
+	  gluUnProject(u, v, depth,
+		       model, projection, viewport,
+		       &x, &y, &z);
+	  printf("%f %f %f\n", x, y, z);
+
+	  x += 0.5 * W;
+	  y += 0.5 * H;
+	  if (x >= 0 && x < W && y >= 0 && y < H)
+	    map[(int)y] ^= 1 << (int)x;
+	}
+	else {
+	  gluUnProject(u, v, 0,
+		       model, projection, viewport,
+		       near + 0, near + 1, near + 2);
+	  gluUnProject(u, v, depth,
+		       model, projection, viewport,
+		       far + 0, far + 1, far + 2);
+	  intercept(near, far, &x, &y);
+	  z = 0;
+	  printf("%f %f\n", x, y);
+	}
+      }
+
+      dragging = 0;
     }
 
     glutPostRedisplay();
@@ -125,18 +136,16 @@ void mouse(int button, int state, int u, int v) {
 }
 
 void motion(int u, int v) {
-  if (mouseX != -1 || mouseY != -1) {
-    // not the initial motion
+  if (u != mouseX || v != mouseY) {
+    dragging = 1;
+
     glMatrixMode(GL_MODELVIEW);
-    glTranslated((mouseX - u) / 10.0, (v - mouseY) / 10.0, 0);
-
-    deltaX += (mouseX - u) / 10.0;
-    deltaY += (v - mouseY) / 10.0;
-
+    glRotatef(u - mouseX, 0, 0, 1);
     glutPostRedisplay();
+
+    mouseX = u;
+    mouseY = v;
   }
-  mouseX = u;
-  mouseY = v;
 }
 
 int main(int argc, char **argv) {
@@ -148,7 +157,7 @@ int main(int argc, char **argv) {
   init();
   glutDisplayFunc(display);
   glutMouseFunc(mouse);
-  glutPassiveMotionFunc(motion);
+  glutMotionFunc(motion);
 
   glutMainLoop();
   return 0;
