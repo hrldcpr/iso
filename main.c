@@ -20,7 +20,7 @@ typedef struct Ball {
 
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
 const double RADIUS = 0.2;
-const double VELOCITY = 0.1; // per second
+const double VELOCITY = 0.5; // per second
 
 Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
 Ball *balls = NULL;
@@ -78,16 +78,25 @@ void intercept(double *p, double *q, double *x, double *y) {
   *y = (1 - t) * p[1] + t * q[1];
 }
 
+void staircase() {
+  int x, y, i;
+  // make a grid
+  for (y = -HEIGHT/2; y < HEIGHT/2; y++) {
+    for (x = -WIDTH/2; x < WIDTH/2; x++)
+      add_cube(x, y, 0);
+  }
+
+  // make an ambiguous staircase
+  for (i = 1; i < 8; i++) {
+    add_cube(i - WIDTH/2, i - HEIGHT/2, i);
+    add_ball_on(cubes);
+  }
+}
+
 void init() {
   srand(time(NULL));
 
-  int n = 16; //rand() % 32;
-  while (n-- > 0) {
-    add_cube(rand()%WIDTH - WIDTH/2,
-	     rand()%HEIGHT - HEIGHT/2,
-	     rand()%DEPTH - DEPTH/2);
-    add_ball_on(cubes);
-  }
+  staircase();
 
   glEnable(GL_DEPTH_TEST);
 
@@ -201,6 +210,7 @@ void motion(int u, int v) {
 
     glMatrixMode(GL_MODELVIEW);
     glRotatef(u - mouse_x, 0, 0, 1);
+    glRotatef(v - mouse_y, 1, 0, 0);
     glutPostRedisplay();
 
     mouse_x = u;
@@ -217,9 +227,9 @@ void idle() {
     Cube *cube;
     Ball *ball = balls;
     while (ball) {
-      x = round(ball->x);
-      y = round(ball->y);
-      z = round(ball->z);
+      x = round(ball->x); // ball is x-centered same as cube
+      y = round(ball->y); // ball is y-centered same as cube
+      z = ceil(ball->z); // ball sits at the top of the cube, whereas the cube is z-centered
 
       if (ball->cube)
 	// balls on cubes move sideways #factoflife
@@ -228,11 +238,11 @@ void idle() {
 	// balls in space fall #factofspace
 	ball->z -= 10 * VELOCITY * dt * 0.001;
 
-      if (x != round(ball->x) || y != round(ball->y) || z != round(ball->z)) {
+      if (x != round(ball->x) || y != round(ball->y) || z != ceil(ball->z)) {
 	// we moved enough to be on a new cube, so check if we are
 	x = round(ball->x);
 	y = round(ball->y);
-	z = round(ball->z);
+	z = ceil(ball->z);
 	cube = cubes;
 	while (cube) {
 	  if (x == cube->x && y == cube->y && z == cube->z)
