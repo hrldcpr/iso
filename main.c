@@ -20,7 +20,7 @@ typedef struct Ball {
 
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
 const double RADIUS = 0.2;
-const double VELOCITY = 0.5; // per second
+const double VELOCITY = 0.1; // per second
 
 Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
 Ball *balls = NULL;
@@ -232,10 +232,12 @@ void idle() {
       y = round(ball->y); // ball is y-centered same as cube
       z = ceil(ball->z); // ball sits at the top of the cube, whereas the cube is z-centered
 
-      // TODO when ball goes off edge of cube, push it RADIUS further in that direction so it's actually on the side
-      if (ball->cube)
+      if (ball->cube) {
 	// balls on cubes move sideways #factoflife
 	ball->x += VELOCITY * dt * 0.001;
+	if (x != round(ball->x))
+	  ball->x += RADIUS;
+      }
       else
 	// balls in space fall #factofspace
 	ball->z -= 10 * VELOCITY * dt * 0.001;
