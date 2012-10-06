@@ -232,6 +232,7 @@ void idle() {
       y = round(ball->y); // ball is y-centered same as cube
       z = ceil(ball->z); // ball sits at the top of the cube, whereas the cube is z-centered
 
+      // TODO when ball goes off edge of cube, push it RADIUS further in that direction so it's actually on the side
       if (ball->cube)
 	// balls on cubes move sideways #factoflife
 	ball->x += VELOCITY * dt * 0.001;
