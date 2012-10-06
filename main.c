@@ -175,8 +175,15 @@ void mouse(int button, int state, int u, int v) {
 	  prev = &next->next;
 	  next = *prev;
 	}
-	if (next) // hit
+	if (next) {// hit
 	  *prev = next->next; // remove from list
+	  Ball *ball = balls;
+	  while(ball) {
+	    if (ball->cube == next)
+	      ball->cube = NULL;
+	    ball = ball->next;
+	  }
+	}
 	else
 	  add_cube(x, y, z);
       }
@@ -219,7 +226,7 @@ void idle() {
 	ball->x += VELOCITY * dt * 0.001;
       else
 	// balls in space fall #factofspace
-	ball->z -= VELOCITY * dt * 0.001;
+	ball->z -= 10 * VELOCITY * dt * 0.001;
 
       if (x != round(ball->x) || y != round(ball->y) || z != round(ball->z)) {
 	// we moved enough to be on a new cube, so check if we are
