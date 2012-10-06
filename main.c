@@ -211,7 +211,7 @@ void motion(int u, int v) {
 
     glMatrixMode(GL_MODELVIEW);
     glRotatef(u - mouse_x, 0, 0, 1);
-    glRotatef(v - mouse_y, 1, 0, 0);
+    //glRotatef(v - mouse_y, 1, 0, 0);
     glutPostRedisplay();
 
     mouse_x = u;
