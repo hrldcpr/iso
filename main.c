@@ -122,7 +122,8 @@ void display() {
     cube = cube->next;
   }
 
-  // TODO disable depth buffer before writing balls?
+  // TODO disable depth buffer before rendering balls? not so simple, since we still want depth test.
+  // TODO use glColor4 and glBlendFunc to give alpha-blending to balls. need to draw from back-to-front lest only the first one passes depth test.
   glTranslated(0, 0, 0.5 + RADIUS); // spheres sit on top of cubes
   Ball *ball = balls;
   while (ball) {
