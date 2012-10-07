@@ -88,6 +88,25 @@ void intercept(double *p, double *q, double *x, double *y) {
   *y = (1 - t) * p[1] + t * q[1];
 }
 
+void rainbow(double x, unsigned char *r, unsigned char *g, unsigned char *b) {
+  x = fmodf(x, 1); // cycle through [0, 1)
+  x *= 6; // we will walk six edges of the RGB cube, so it's easiest to go from 0 to 6.
+
+  if (x < 1) { // red to yellow
+    *r = 255; *b = 0; *g = 256 * x;
+  } else if (x < 2) { // yellow to green
+    *b = 0; *g = 255; *r = 255 * (2 - x);
+  } else if (x < 3) { // green to turquoise
+    *g = 255; *r = 0; *b = 256 * (x - 2);
+  } else if (x < 4) { // turquoise to blue
+    *r = 0; *b = 255; *g = 255 * (4 - x);
+  } else if (x < 5) { // blue to purple
+    *b = 255; *g = 0; *r = 256 * (x - 4);
+  } else { // purple to red
+    *g = 0; *r = 255; *b = 255 * (6 - x);
+  }
+}
+
 void staircase() {
   int x, y, i;
   // make a grid
@@ -100,9 +119,7 @@ void staircase() {
   unsigned char r, g, b;
   for (i = 7; i >= 0; i--) {
     add_cube(i - WIDTH/2, i - HEIGHT/2, i + 1);
-    if (i <= 3) r = 255 >> (3 - i);
-    if (i <= 5) g = 255 >> (5 - i);
-    b = 255 >> (7 - i);
+    rainbow(i / 7.0, &r, &g, &b);
     add_ball_on(r, g, b, cubes);
   }
 }
