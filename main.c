@@ -23,7 +23,7 @@ typedef struct Ball {
 
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
 const float RADIUS = 0.2;
-const float VELOCITY = 0.1; // per second
+const float VELOCITY = 0.5; // per second
 
 Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
 Ball *balls = NULL;
@@ -165,7 +165,7 @@ void display() {
   while (ball) {
     glPushMatrix();
     glTranslatef(ball->x, ball->y, ball->z);
-    glColor4ub(ball->r, ball->g, ball->b, 128);
+    glColor4ub(ball->r, ball->g, ball->b, 255);
     glutSolidSphere(RADIUS, 10, 10);
     glPopMatrix();
     ball = ball->next;
@@ -272,8 +272,8 @@ void idle() {
       if (ball->cube) {
 	// balls on cubes move sideways #factoflife
 	ball->x += VELOCITY * dt * 0.001;
-	if (x != round(ball->x))
-	  ball->x += RADIUS;
+	/* if (x != round(ball->x)) */
+	/*   ball->x += RADIUS; */
       }
       else
 	// balls in space fall #factofspace
