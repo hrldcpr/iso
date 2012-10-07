@@ -14,6 +14,9 @@ typedef struct Ball {
   double x;
   double y;
   double z;
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
   Cube *cube;
   struct Ball *next;
 } Ball;
@@ -37,22 +40,29 @@ void add_cube(int x, int y, int z) {
   cubes = cube;
 }
 
-void add_ball(double x, double y, double z, Cube *cube) {
+void add_ball(double x, double y, double z,
+	      unsigned char r, unsigned char g, unsigned char b,
+	      Cube *cube) {
   Ball *ball = malloc(sizeof(Ball));
   ball->x = x;
   ball->y = y;
   ball->z = z;
+  ball->r = r;
+  ball->g = g;
+  ball->b = b;
   ball->cube = cube;
   ball->next = balls;
   balls = ball;
 }
 
-void add_ball_at(double x, double y, double z) {
-  add_ball(x, y, z, NULL);
+void add_ball_at(double x, double y, double z,
+		 unsigned char r, unsigned char g, unsigned char b) {
+  add_ball(x, y, z, r, g, b, NULL);
 }
 
-void add_ball_on(Cube *cube) {
-  add_ball(cube->x, cube->y, cube->z, cube);
+void add_ball_on(unsigned char r, unsigned char g, unsigned char b,
+		 Cube *cube) {
+  add_ball(cube->x, cube->y, cube->z, r, g, b, cube);
 }
 
 void isometric() {
@@ -87,16 +97,18 @@ void staircase() {
   }
 
   // make an ambiguous staircase
+  unsigned char r, g, b;
   for (i = 1; i < 8; i++) {
     add_cube(i - WIDTH/2, i - HEIGHT/2, i);
-    add_ball_on(cubes);
+    if (i <= 2) r = 32 << i;
+    if (i <= 4) b = 8 << i;
+    g = 1 << i;
+    add_ball_on(r, g, b, cubes);
   }
 }
 
 void init() {
   srand(time(NULL));
-
-  staircase();
 
   glEnable(GL_DEPTH_TEST);
 
@@ -104,8 +116,11 @@ void init() {
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
   glLightfv(GL_LIGHT0, GL_POSITION, light);
+  glEnable(GL_COLOR_MATERIAL); // makes glColor work with GL_LIGHTING enabled
 
   isometric();
+
+  staircase();
 }
 
 void display() {
@@ -113,6 +128,7 @@ void display() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
+  glColor4d(1, 1, 1, 1);
   Cube *cube = cubes;
   while (cube) {
     glPushMatrix();
@@ -129,6 +145,7 @@ void display() {
   while (ball) {
     glPushMatrix();
     glTranslated(ball->x, ball->y, ball->z);
+    glColor4ub(ball->r, ball->g, ball->b, 255);
     glutSolidSphere(RADIUS, 10, 10);
     glPopMatrix();
     ball = ball->next;
