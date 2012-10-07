@@ -11,9 +11,9 @@ typedef struct Cube {
 } Cube;
 
 typedef struct Ball {
-  double x;
-  double y;
-  double z;
+  float x;
+  float y;
+  float z;
   unsigned char r;
   unsigned char g;
   unsigned char b;
@@ -22,8 +22,8 @@ typedef struct Ball {
 } Ball;
 
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
-const double RADIUS = 0.2;
-const double VELOCITY = 0.1; // per second
+const float RADIUS = 0.2;
+const float VELOCITY = 0.1; // per second
 
 Cube *cubes = NULL; // linked list of cubes, for easy insertion / removal
 Ball *balls = NULL;
@@ -40,7 +40,7 @@ void add_cube(int x, int y, int z) {
   cubes = cube;
 }
 
-void add_ball(double x, double y, double z,
+void add_ball(float x, float y, float z,
 	      unsigned char r, unsigned char g, unsigned char b,
 	      Cube *cube) {
   Ball *ball = malloc(sizeof(Ball));
@@ -55,7 +55,7 @@ void add_ball(double x, double y, double z,
   balls = ball;
 }
 
-void add_ball_at(double x, double y, double z,
+void add_ball_at(float x, float y, float z,
 		 unsigned char r, unsigned char g, unsigned char b) {
   add_ball(x, y, z, r, g, b, NULL);
 }
@@ -68,7 +68,7 @@ void add_ball_on(unsigned char r, unsigned char g, unsigned char b,
 void isometric() {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  double d = 10 / sqrt(3);
+  float d = 10 / sqrt(3);
   gluLookAt(d, d, d, // camera position, 10 away from origin
 	    0, 0, 0, // origin is at center
 	    0, 0, 1  // z-axis is upwards
@@ -98,11 +98,11 @@ void staircase() {
 
   // make an ambiguous staircase
   unsigned char r, g, b;
-  for (i = 1; i < 8; i++) {
-    add_cube(i - WIDTH/2, i - HEIGHT/2, i);
-    if (i <= 2) r = 32 << i;
-    if (i <= 4) b = 8 << i;
-    g = 1 << i;
+  for (i = 7; i >= 0; i--) {
+    add_cube(i - WIDTH/2, i - HEIGHT/2, i + 1);
+    if (i <= 3) r = 255 >> (3 - i);
+    if (i <= 5) g = 255 >> (5 - i);
+    b = 255 >> (7 - i);
     add_ball_on(r, g, b, cubes);
   }
 }
@@ -118,6 +118,9 @@ void init() {
   glLightfv(GL_LIGHT0, GL_POSITION, light);
   glEnable(GL_COLOR_MATERIAL); // makes glColor work with GL_LIGHTING enabled
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   isometric();
 
   staircase();
@@ -128,11 +131,11 @@ void display() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
-  glColor4d(1, 1, 1, 1);
+  glColor4f(1, 1, 1, 1);
   Cube *cube = cubes;
   while (cube) {
     glPushMatrix();
-    glTranslated(cube->x, cube->y, cube->z);
+    glTranslatef(cube->x, cube->y, cube->z);
     glutSolidCube(1);
     glPopMatrix();
     cube = cube->next;
@@ -140,12 +143,12 @@ void display() {
 
   // TODO disable depth buffer before rendering balls? not so simple, since we still want depth test.
   // TODO use glColor4 and glBlendFunc to give alpha-blending to balls. need to draw from back-to-front lest only the first one passes depth test.
-  glTranslated(0, 0, 0.5 + RADIUS); // spheres sit on top of cubes
+  glTranslatef(0, 0, 0.5 + RADIUS); // spheres sit on top of cubes
   Ball *ball = balls;
   while (ball) {
     glPushMatrix();
-    glTranslated(ball->x, ball->y, ball->z);
-    glColor4ub(ball->r, ball->g, ball->b, 255);
+    glTranslatef(ball->x, ball->y, ball->z);
+    glColor4ub(ball->r, ball->g, ball->b, 128);
     glutSolidSphere(RADIUS, 10, 10);
     glPopMatrix();
     ball = ball->next;
