@@ -117,9 +117,9 @@ void staircase() {
 
   // make an ambiguous staircase
   unsigned char r, g, b;
-  for (i = 7; i >= 0; i--) {
+  for (i = 6; i >= 1; i--) {
     add_cube(i - WIDTH/2, i - HEIGHT/2, i + 1);
-    rainbow(i / 7.0, &r, &g, &b);
+    rainbow(i / 6.0, &r, &g, &b);
     add_ball_on(r, g, b, cubes);
   }
 }
@@ -136,7 +136,6 @@ void init() {
   glEnable(GL_COLOR_MATERIAL); // makes glColor work with GL_LIGHTING enabled
 
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   isometric();
 
@@ -148,7 +147,8 @@ void display() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
-  glColor4f(1, 1, 1, 1);
+  glBlendFunc(GL_ONE, GL_ZERO); // the default blend func, which ignores alpha
+  glColor4f(1, 1, 1, 0); // zero alpha, so that the balls we draw later using alpha-blending interact with each other but not with the cubes
   Cube *cube = cubes;
   while (cube) {
     glPushMatrix();
@@ -159,7 +159,20 @@ void display() {
   }
 
   // TODO disable depth buffer before rendering balls? not so simple, since we still want depth test.
-  // TODO use glColor4 and glBlendFunc to give alpha-blending to balls. need to draw from back-to-front lest only the first one passes depth test.
+  glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); // additive blending, so colors can combine to white
+
+  glPushMatrix();
+  glTranslatef(0, 0, 1);
+  glColor4f(1, 0, 0, 1);
+  glutSolidCube(1);
+  glTranslatef(1, 1, 1);
+  glColor4f(0, 1, 0, 1);
+  glutSolidCube(1);
+  glTranslatef(1, 1, 1);
+  glColor4f(0, 0, 1, 1);
+  glutSolidCube(1);
+  glPopMatrix();
+
   glTranslatef(0, 0, 0.5 + RADIUS); // spheres sit on top of cubes
   Ball *ball = balls;
   while (ball) {
@@ -304,7 +317,7 @@ void idle() {
 int main(int argc, char **argv) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
-  glutInitWindowSize(640, 640);
+  glutInitWindowSize(800, 800);
   glutCreateWindow("iso");
 
   init();
