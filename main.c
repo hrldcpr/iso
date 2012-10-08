@@ -120,7 +120,7 @@ void staircase() {
   for (i = 6; i >= 1; i--) {
     add_cube(i - WIDTH/2, i - HEIGHT/2, i + 1);
     rainbow(i / 6.0, &r, &g, &b);
-    add_ball_on(r, g, b, cubes);
+    //add_ball_on(r, g, b, cubes);
   }
 }
 
