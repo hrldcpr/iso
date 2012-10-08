@@ -162,7 +162,7 @@ void display() {
   glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); // additive blending, so colors can combine to white
 
   glPushMatrix();
-  glTranslatef(0, 0, 1);
+  glTranslatef(0, 0, 1.5);
   glColor4f(1, 0, 0, 1);
   glutSolidCube(1);
   glTranslatef(1, 1, 1);
