@@ -22,6 +22,18 @@ function fillPolygon(c, vertices) {
     c.fill();
 }
 
+function leftTriangle(r) {
+    return [r[0], r[1],
+	    r[4], r[5],
+	    r[6], r[7]];
+}
+
+function rightTriangle(r) {
+    return [r[0], r[1],
+	    r[2], r[3],
+	    r[4], r[5]];
+}
+
 function drawCube(c, u, v) {
     var w = getCube(u, v);
     if (!w) return;
@@ -29,40 +41,58 @@ function drawCube(c, u, v) {
     c.save();
     c.translate(u + v, v - u);
 
-    if (w >= getCube(u + 1, v - 1)) {
+    // six neighboring cubes, clockwise from top
+    var neighbors = [getCube(u + 1, v - 1),
+		     getCube(u + 1, v),
+		     getCube(u, v + 1),
+		     getCube(u - 1, v + 1),
+		     getCube(u - 1, v),
+		     getCube(u, v - 1)];
+    var rhombus;
+
+    if (w >= neighbors[0]) {
+	// top
 	c.fillStyle = '#ffffff';
-	if (w >= getCube(u, v - 1)) // top-left
-	    fillPolygon(c, [1, 0,
-			    0, 1,
-			    1, 2]);
-	if (w >= getCube(u + 1, v)) // top-right
-	    fillPolygon(c, [1, 0,
-			    2, 1,
-			    1, 2]);
+	rhombus = [1, 0,
+		   2, 1,
+		   1, 2,
+		   0, 1];
+	if (w >= neighbors[5] && w >= neighbors[1])
+	    fillPolygon(c, rhombus);
+	else if (w >= neighbors[5])
+	    fillPolygon(c, leftTriangle(rhombus));
+	else if (w >= neighbors[1])
+	    fillPolygon(c, rightTriangle(rhombus));
     }
 
-    if (w > getCube(u - 1, v)) {
+    if (w > neighbors[4]) {
+	// left
 	c.fillStyle = '#555555';
-	if (w >= getCube(u, v - 1)) // left-top
-	    fillPolygon(c, [0, 1,
-			    1, 2,
-			    0, 3]);
-	if (w > getCube(u - 1, v + 1)) // left-bottom
-	    fillPolygon(c, [1, 2,
-			    0, 3,
-			    1, 4]);
+	rhombus = [1, 2,
+		   1, 4,
+		   0, 3,
+		   0, 1];
+	if (w >= neighbors[5] && w > neighbors[3])
+	    fillPolygon(c, rhombus);
+	else if (w >= neighbors[5])
+	    fillPolygon(c, leftTriangle(rhombus));
+	else if (w > neighbors[3])
+	    fillPolygon(c, rightTriangle(rhombus));
     }
 
-    if (w > getCube(u, v + 1)) {
+    if (w >= neighbors[2]) {
+	// right
 	c.fillStyle = '#aaaaaa';
-	if (w >= getCube(u + 1, v)) // right-top
-	    fillPolygon(c, [2, 1,
-			    1, 2,
-			    2, 3]);
-	if (w > getCube(u - 1, v + 1)) // right-bottom
-	    fillPolygon(c, [1, 2,
-			    2, 3,
-			    1, 4]);
+	rhombus = [1, 2,
+		   2, 1,
+		   2, 3,
+		   1, 4];
+	if (w > neighbors[3] && w >= neighbors[1])
+	    fillPolygon(c, rhombus);
+	else if (w > neighbors[3])
+	    fillPolygon(c, leftTriangle(rhombus));
+	else if (w >= neighbors[1])
+	    fillPolygon(c, rightTriangle(rhombus));
     }
 
     c.restore();
@@ -75,10 +105,10 @@ function draw(c) {
     }
 }
 
-addCube(1, 3, 2);
+addCube(1, 3, 1);
 addCube(1, 4, 1);
 addCube(2, 4, 2);
-addCube(2, 3, 3);
+addCube(2, 3, 1);
 
 $(function() {
     var canvas = document.getElementById('canvas');
