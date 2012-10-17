@@ -1,1 +1,1 @@
-gcc -o iso -framework opengl -framework glut main.c
+gcc -o 3d -framework opengl -framework glut 3d.c
