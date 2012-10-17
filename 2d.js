@@ -98,7 +98,10 @@ function drawCube(c, u, v) {
     c.restore();
 }
 
-function draw(c) {
+function draw() {
+    var c = $('#canvas')[0].getContext('2d');
+
+    c.clearRect(0, 0, N, N);
     for (var v = 0; v < N; v++) {
 	for (var u = 0; u < N; u++)
 	    drawCube(c, u, v);
@@ -111,8 +114,27 @@ addCube(2, 4, 2);
 addCube(2, 3, 1);
 
 $(function() {
-    var canvas = document.getElementById('canvas');
+    var canvas = $('#canvas');
+    canvas.click(function(e) {
+	console.log(e);
+
+	var x = e.offsetX * N / canvas.width / dX; // = u + v
+	var y = e.offsetY * N / canvas.height / dY; // = v - u
+	var u = Math.round((x - y) / 2);
+	var v = Math.round((x + y) / 2);
+	console.log(x + ',' + y + '=' + u + ',' + v);
+	if (getCube(u, v))
+	    addCube(u, v, 1);
+	else
+	    removeCube(u, v);
+
+	console.log(cubes);
+	draw();
+    });
+
+    canvas = canvas[0];
     var c = canvas.getContext('2d');
     c.scale(canvas.width / N * dX, canvas.height / N * dY);
-    draw(c);
+
+    draw();
 });
