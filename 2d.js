@@ -1,6 +1,18 @@
 var dY = 0.5;
 var dX = Math.sqrt(1*1 - 0.5*0.5);
 
+var N = 10;
+var cubes = [];
+function addCube(u, v) {
+    cubes[u + v*N] = true;
+}
+function removeCube(u, v) {
+    delete cubes[u + v*N];
+}
+function hasCube(u, v) {
+    return cubes[u + v*N];
+}
+
 function path(c, vertices) {
     c.beginPath();
     c.moveTo(vertices[0], vertices[1]);
@@ -9,34 +21,60 @@ function path(c, vertices) {
     c.closePath();
 }
 
-function drawCube(c) {
-    // top
-    c.fillStyle = '#ffffff';
-    path(c, [dX, 0,
-	     2 * dX, dY,
-	     dX, 2 * dY,
-	     0, dY]);
-    c.fill();
+function drawCube(c, u, v) {
+    if (!hasCube(u, v)) return;
 
-    // left
-    c.fillStyle = '#555555';
-    path(c, [0, dY,
-	     dX, 2 * dY,
-	     dX, 4 * dY,
-	     0, 3 * dY]);
-    c.fill();
+    c.save();
+    c.translate(u + v, v - u);
 
-    // right
-    c.fillStyle = '#aaaaaa';
-    path(c, [2 * dX, dY,
-	     2 * dX, 3 * dY,
-	     dX, 4 * dY,
-	     dX, 2 * dY]);
-    c.fill();
+    if (!hasCube(u + 1, v - 1)) {
+	// top
+	c.fillStyle = '#ffffff';
+	path(c, [1, 0,
+		 2, 1,
+		 1, 2,
+		 0, 1]);
+	c.fill();
+    }
+
+    if (!hasCube(u - 1, v)) {
+	// left
+	c.fillStyle = '#555555';
+	path(c, [0, 1,
+		 1, 2,
+		 1, 4,
+		 0, 3]);
+	c.fill();
+    }
+
+    if (!hasCube(u, v + 1)) {
+	// right
+	c.fillStyle = '#aaaaaa';
+	path(c, [2, 1,
+		 2, 3,
+		 1, 4,
+		 1, 2]);
+	c.fill();
+    }
+
+    c.restore();
 }
 
+function draw(c) {
+    for (var v = 0; v < N; v++) {
+	for (var u = 0; u < N; u++)
+	    drawCube(c, u, v);
+    }
+}
+
+addCube(1, 1);
+addCube(1, 2);
+addCube(2, 2);
+addCube(2, 1);
+
 $(function() {
-    var c = $('#canvas')[0].getContext('2d');
-    c.scale(100, 100);
-    drawCube(c);
+    var canvas = document.getElementById('canvas');
+    var c = canvas.getContext('2d');
+    c.scale(canvas.width / N * dX, canvas.height / N * dY);
+    draw(c);
 });
