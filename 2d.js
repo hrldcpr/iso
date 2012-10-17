@@ -3,14 +3,14 @@ var dX = Math.sqrt(1*1 - 0.5*0.5);
 
 var N = 10;
 var cubes = [];
-function addCube(u, v) {
-    cubes[u + v*N] = true;
+function addCube(u, v, w) {
+    cubes[u + v*N] = w;
 }
 function removeCube(u, v) {
     delete cubes[u + v*N];
 }
-function hasCube(u, v) {
-    return cubes[u + v*N];
+function getCube(u, v) {
+    return cubes[u + v*N] || 0;
 }
 
 function path(c, vertices) {
@@ -22,12 +22,13 @@ function path(c, vertices) {
 }
 
 function drawCube(c, u, v) {
-    if (!hasCube(u, v)) return;
+    var w = getCube(u, v);
+    if (!w) return;
 
     c.save();
     c.translate(u + v, v - u);
 
-    if (!hasCube(u + 1, v - 1)) {
+    if (w >= getCube(u + 1, v - 1)) {
 	// top
 	c.fillStyle = '#ffffff';
 	path(c, [1, 0,
@@ -37,7 +38,7 @@ function drawCube(c, u, v) {
 	c.fill();
     }
 
-    if (!hasCube(u - 1, v)) {
+    if (w > getCube(u - 1, v)) {
 	// left
 	c.fillStyle = '#555555';
 	path(c, [0, 1,
@@ -47,7 +48,7 @@ function drawCube(c, u, v) {
 	c.fill();
     }
 
-    if (!hasCube(u, v + 1)) {
+    if (w > getCube(u, v + 1)) {
 	// right
 	c.fillStyle = '#aaaaaa';
 	path(c, [2, 1,
@@ -67,10 +68,10 @@ function draw(c) {
     }
 }
 
-addCube(1, 1);
-addCube(1, 2);
-addCube(2, 2);
-addCube(2, 1);
+addCube(1, 3, 1);
+addCube(1, 4, 1);
+addCube(2, 4, 1);
+addCube(2, 3, 2);
 
 $(function() {
     var canvas = document.getElementById('canvas');
