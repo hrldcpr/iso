@@ -13,12 +13,13 @@ function getCube(u, v) {
     return cubes[u + v*N] || 0;
 }
 
-function path(c, vertices) {
+function fillPolygon(c, vertices) {
     c.beginPath();
     c.moveTo(vertices[0], vertices[1]);
     for (var i = 2; i < vertices.length; i += 2)
 	c.lineTo(vertices[i], vertices[i + 1]);
     c.closePath();
+    c.fill();
 }
 
 function drawCube(c, u, v) {
@@ -29,33 +30,39 @@ function drawCube(c, u, v) {
     c.translate(u + v, v - u);
 
     if (w >= getCube(u + 1, v - 1)) {
-	// top
 	c.fillStyle = '#ffffff';
-	path(c, [1, 0,
-		 2, 1,
-		 1, 2,
-		 0, 1]);
-	c.fill();
+	if (w >= getCube(u, v - 1)) // top-left
+	    fillPolygon(c, [1, 0,
+			    0, 1,
+			    1, 2]);
+	if (w >= getCube(u + 1, v)) // top-right
+	    fillPolygon(c, [1, 0,
+			    2, 1,
+			    1, 2]);
     }
 
     if (w > getCube(u - 1, v)) {
-	// left
 	c.fillStyle = '#555555';
-	path(c, [0, 1,
-		 1, 2,
-		 1, 4,
-		 0, 3]);
-	c.fill();
+	if (w >= getCube(u, v - 1)) // left-top
+	    fillPolygon(c, [0, 1,
+			    1, 2,
+			    0, 3]);
+	if (w > getCube(u - 1, v + 1)) // left-bottom
+	    fillPolygon(c, [1, 2,
+			    0, 3,
+			    1, 4]);
     }
 
     if (w > getCube(u, v + 1)) {
-	// right
 	c.fillStyle = '#aaaaaa';
-	path(c, [2, 1,
-		 2, 3,
-		 1, 4,
-		 1, 2]);
-	c.fill();
+	if (w >= getCube(u + 1, v)) // right-top
+	    fillPolygon(c, [2, 1,
+			    1, 2,
+			    2, 3]);
+	if (w > getCube(u - 1, v + 1)) // right-bottom
+	    fillPolygon(c, [1, 2,
+			    2, 3,
+			    1, 4]);
     }
 
     c.restore();
@@ -68,10 +75,10 @@ function draw(c) {
     }
 }
 
-addCube(1, 3, 1);
+addCube(1, 3, 2);
 addCube(1, 4, 1);
-addCube(2, 4, 1);
-addCube(2, 3, 2);
+addCube(2, 4, 2);
+addCube(2, 3, 3);
 
 $(function() {
     var canvas = document.getElementById('canvas');
