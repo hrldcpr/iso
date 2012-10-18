@@ -120,7 +120,7 @@ function draw() {
     var c = $('#canvas')[0].getContext('2d');
 
     c.clearRect(0, 0, 2 * N, 2 * N);
-    for (var v = 0; v < N; v++) {
+    for (var v = 0; v < 2*N; v++) {
 	for (var u = -N; u < N; u++)
 	    fillCube(c, u, v);
     }
