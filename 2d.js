@@ -151,10 +151,12 @@ function mousemove(e) {
     }
 }
 
-setCube(1, 3, 1);
-setCube(1, 4, 1);
-setCube(2, 4, 2);
-setCube(2, 3, 1);
+for (var v = 0; v < 2*N; v++) {
+    for (var u = -N; u < N; u++) {
+	if (Math.random() < 0.3)
+	    setCube(u, v, Math.ceil(3 * Math.random()));
+    }
+}
 
 $(function() {
     var canvas = $('#canvas');
