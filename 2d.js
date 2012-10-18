@@ -2,24 +2,24 @@ var dY = 0.5;
 var dX = Math.sqrt(1*1 - 0.5*0.5);
 
 var N = 10;
-var cubes = [];
-function addCube(u, v, w) {
-    cubes[u + v*N] = w;
-}
-function removeCube(u, v) {
-    delete cubes[u + v*N];
+var cubes = {};
+function setCube(u, v, w) {
+    if (w == 0)
+	delete cubes[u + ',' + v];
+    else
+	cubes[u + ',' + v] = w;
 }
 function getCube(u, v) {
-    return cubes[u + v*N] || 0;
+    return cubes[u + ',' + v] || 0;
 }
 
-function fillPolygon(c, vertices) {
+function polygon(c, vertices) {
     c.beginPath();
     c.moveTo(vertices[0], vertices[1]);
     for (var i = 2; i < vertices.length; i += 2)
 	c.lineTo(vertices[i], vertices[i + 1]);
     c.closePath();
-    c.fill();
+    return c;
 }
 
 function leftTriangle(r) {
@@ -34,12 +34,12 @@ function rightTriangle(r) {
 	    r[4], r[5]];
 }
 
-function drawCube(c, u, v) {
+function fillCube(c, u, v) {
     var w = getCube(u, v);
     if (!w) return;
 
     c.save();
-    c.translate(u + v, v - u);
+    c.translate(u + v - 1, v - u - 1);
 
     // six neighboring cubes, clockwise from top
     var neighbors = [getCube(u + 1, v - 1),
@@ -58,11 +58,11 @@ function drawCube(c, u, v) {
 		   1, 2,
 		   0, 1];
 	if (w >= neighbors[5] && w >= neighbors[1])
-	    fillPolygon(c, rhombus);
+	    polygon(c, rhombus).fill();
 	else if (w >= neighbors[5])
-	    fillPolygon(c, leftTriangle(rhombus));
+	    polygon(c, leftTriangle(rhombus)).fill();
 	else if (w >= neighbors[1])
-	    fillPolygon(c, rightTriangle(rhombus));
+	    polygon(c, rightTriangle(rhombus)).fill();
     }
 
     if (w > neighbors[4]) {
@@ -73,11 +73,11 @@ function drawCube(c, u, v) {
 		   0, 3,
 		   0, 1];
 	if (w >= neighbors[5] && w > neighbors[3])
-	    fillPolygon(c, rhombus);
+	    polygon(c, rhombus).fill();
 	else if (w >= neighbors[5])
-	    fillPolygon(c, leftTriangle(rhombus));
+	    polygon(c, leftTriangle(rhombus)).fill();
 	else if (w > neighbors[3])
-	    fillPolygon(c, rightTriangle(rhombus));
+	    polygon(c, rightTriangle(rhombus)).fill();
     }
 
     if (w >= neighbors[2]) {
@@ -88,53 +88,83 @@ function drawCube(c, u, v) {
 		   2, 3,
 		   1, 4];
 	if (w > neighbors[3] && w >= neighbors[1])
-	    fillPolygon(c, rhombus);
+	    polygon(c, rhombus).fill();
 	else if (w > neighbors[3])
-	    fillPolygon(c, leftTriangle(rhombus));
+	    polygon(c, leftTriangle(rhombus)).fill();
 	else if (w >= neighbors[1])
-	    fillPolygon(c, rightTriangle(rhombus));
+	    polygon(c, rightTriangle(rhombus)).fill();
     }
 
     c.restore();
 }
 
+function strokeCube(c, u, v) {
+    c.save();
+    c.translate(u + v - 1, v - u - 1);
+
+    var hexagon = [1, 0,
+		   2, 1,
+		   2, 3,
+		   1, 4,
+		   0, 3,
+		   0, 1];
+    c.strokeStyle = '#aa0000';
+    polygon(c, hexagon).stroke();
+
+    c.restore();
+}
+
+var mouseU, mouseV;
+
 function draw() {
     var c = $('#canvas')[0].getContext('2d');
 
-    c.clearRect(0, 0, N, N);
+    c.clearRect(0, 0, 2 * N, 2 * N);
     for (var v = 0; v < N; v++) {
-	for (var u = 0; u < N; u++)
-	    drawCube(c, u, v);
+	for (var u = -N; u < N; u++)
+	    fillCube(c, u, v);
+    }
+
+    if (mouseU !== undefined && mouseV !== undefined)
+	strokeCube(c, mouseU, mouseV);
+}
+
+function fromPixel(x, y) {
+    x *= N / canvas.width / dX; // = u + v
+    y *= N / canvas.height / dY; // = v - u
+    return {u: Math.round((x - y) / 2),
+	    v: Math.round((x + y) / 2)};
+}
+
+function click(e) {
+    var p = fromPixel(e.offsetX, e.offsetY);
+    setCube(p.u, p.v, (getCube(p.u, p.v) + 1) % 4);
+    draw();
+}
+
+function mousemove(e) {
+    var p = fromPixel(e.offsetX, e.offsetY);
+    if (mouseU != p.u || mouseV != p.v) {
+	mouseU = p.u;
+	mouseV = p.v;
+	draw();
     }
 }
 
-addCube(1, 3, 1);
-addCube(1, 4, 1);
-addCube(2, 4, 2);
-addCube(2, 3, 1);
+setCube(1, 3, 1);
+setCube(1, 4, 1);
+setCube(2, 4, 2);
+setCube(2, 3, 1);
 
 $(function() {
     var canvas = $('#canvas');
-    canvas.click(function(e) {
-	console.log(e);
-
-	var x = e.offsetX * N / canvas.width / dX; // = u + v
-	var y = e.offsetY * N / canvas.height / dY; // = v - u
-	var u = Math.round((x - y) / 2);
-	var v = Math.round((x + y) / 2);
-	console.log(x + ',' + y + '=' + u + ',' + v);
-	if (getCube(u, v))
-	    addCube(u, v, 1);
-	else
-	    removeCube(u, v);
-
-	console.log(cubes);
-	draw();
-    });
+    canvas.click(click);
+    canvas.mousemove(mousemove);
 
     canvas = canvas[0];
     var c = canvas.getContext('2d');
     c.scale(canvas.width / N * dX, canvas.height / N * dY);
+    c.lineWidth = 2 * N / dX / canvas.width;
 
     draw();
 });
