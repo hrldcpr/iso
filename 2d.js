@@ -13,6 +13,16 @@ function getCube(u, v) {
     return cubes[u + ',' + v] || 0;
 }
 
+function getNeighbors(u, v) {
+    // six neighboring cubes, clockwise from top
+    return [getCube(u + 1, v - 1),
+	    getCube(u + 1, v),
+	    getCube(u, v + 1),
+	    getCube(u - 1, v + 1),
+	    getCube(u - 1, v),
+	    getCube(u, v - 1)];
+}
+
 function polygon(c, vertices) {
     c.beginPath();
     c.moveTo(vertices[0], vertices[1]);
@@ -41,13 +51,7 @@ function fillCube(c, u, v) {
     c.save();
     c.translate(u + v - 1, v - u - 1);
 
-    // six neighboring cubes, clockwise from top
-    var neighbors = [getCube(u + 1, v - 1),
-		     getCube(u + 1, v),
-		     getCube(u, v + 1),
-		     getCube(u - 1, v + 1),
-		     getCube(u - 1, v),
-		     getCube(u, v - 1)];
+    var neighbors = getNeighbors(u, v);
     var rhombus;
 
     if (w >= neighbors[0]) {
@@ -138,13 +142,29 @@ function fromPixel(x, y) {
 
 function click(e) {
     var p = fromPixel(e.offsetX, e.offsetY);
-    setCube(p.u, p.v, (getCube(p.u, p.v) + 1) % 4);
+
+    var w = getCube(p.u, p.v);
+    var neighbors = getNeighbors(p.u, p.v).sort();
+    if (w == 0) // create a new cube behind all neighbors
+	w = Math.max(1, neighbors[0] - 1); // currently depth must be positive
+    else { // move to the next depth
+	for (var i = 0; i < 6 && w > neighbors[i]; i++);
+	if (i == 6) // we are in front already, so now disappear
+	    w = 0;
+	else
+	    w = neighbors[i] + 1;
+    }
+    setCube(p.u, p.v, w);
+    console.log(p.u + ',' + p.v + ': ' + getCube(p.u, p.v));
+
     draw();
 }
 
 function mousemove(e) {
     var p = fromPixel(e.offsetX, e.offsetY);
     if (mouseU != p.u || mouseV != p.v) {
+	console.log(p.u + ',' + p.v + ': ' + getCube(p.u, p.v));
+
 	mouseU = p.u;
 	mouseV = p.v;
 	draw();
