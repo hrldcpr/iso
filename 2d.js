@@ -1,7 +1,7 @@
 var dY = 0.5;
 var dX = Math.sqrt(1*1 - 0.5*0.5);
 
-var N = 10;
+var N = 16;
 var cubes = {};
 function setCube(u, v, w) {
     if (w == 0)
