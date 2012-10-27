@@ -31,6 +31,7 @@ Ball *balls = NULL;
 int mouse_x, mouse_y;
 char dragging = 0;
 long prev_time = -1;
+float theta = 0;
 
 void add_cube(int x, int y, int z) {
   Cube *cube = malloc(sizeof(Cube));
@@ -83,6 +84,7 @@ void lookFrom(char cx, char cy, char cz,
 	    0, 0, 0, // origin is at center
 	    upx, upy, upz  // z-axis is upwards
 	    );
+  glRotatef(theta, 0, 0, 1);
 }
 
 // where does the line through p and q interecept the plane z=0?
@@ -224,11 +226,14 @@ void mouse(int button, int state, int u, int v) {
 	int viewport[4];
 	float depth;
 
+        glViewport(0, VIEW_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT);
+        lookFrom(1, 1, 1, 0, 0, 1); // isometric
+
 	glGetDoublev(GL_MODELVIEW_MATRIX, model);
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);
 	glGetIntegerv(GL_VIEWPORT, viewport);
 
-	v = viewport[3] - v;
+	v = 2 * VIEW_HEIGHT - v;
 
 	glReadPixels(u, v, 1, 1, // the 1x1 rect at (u,v)
 		     GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
@@ -283,9 +288,7 @@ void motion(int u, int v) {
   if (u != mouse_x || v != mouse_y) {
     dragging = 1;
 
-    glMatrixMode(GL_MODELVIEW);
-    glRotatef(u - mouse_x, 0, 0, 1);
-    //glRotatef(v - mouse_y, 1, 0, 0);
+    theta += u - mouse_x;
     glutPostRedisplay();
 
     mouse_x = u;
