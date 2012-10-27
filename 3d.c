@@ -21,6 +21,7 @@ typedef struct Ball {
   struct Ball *next;
 } Ball;
 
+const int VIEW_WIDTH = 400, VIEW_HEIGHT = 400;
 const int WIDTH = 8, HEIGHT = 8, DEPTH = 8;
 const float RADIUS = 0.2;
 const float VELOCITY = 0.5; // per second
@@ -65,20 +66,23 @@ void add_ball_on(unsigned char r, unsigned char g, unsigned char b,
   add_ball(cube->x, cube->y, cube->z, r, g, b, cube);
 }
 
-void isometric() {
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  float d = 10 / sqrt(3);
-  gluLookAt(d, d, d, // camera position, 10 away from origin
-	    0, 0, 0, // origin is at center
-	    0, 0, 1  // z-axis is upwards
-	    );
-
+void orthographic() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(-10, 10,
 	  -10, 10,
 	  1, 20);
+}
+
+void lookFrom(char cx, char cy, char cz,
+              char upx, char upy, char upz) {
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  float d = 10 / sqrt(cx + cy + cz);
+  gluLookAt(d * cx, d * cy, d * cz, // camera position, 10 away from origin
+	    0, 0, 0, // origin is at center
+	    upx, upy, upz  // z-axis is upwards
+	    );
 }
 
 // where does the line through p and q interecept the plane z=0?
@@ -137,13 +141,12 @@ void init() {
 
   glEnable(GL_BLEND);
 
-  isometric();
+  orthographic();
 
   staircase();
 }
 
-void display() {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void draw() {
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
@@ -185,6 +188,27 @@ void display() {
   }
 
   glPopMatrix();
+}
+
+void display() {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glViewport(0, VIEW_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT);
+  lookFrom(1, 1, 1, 0, 0, 1); // isometric
+  draw();
+
+  glViewport(VIEW_WIDTH, VIEW_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT);
+  lookFrom(1, 0, 0, 0, 0, 1); // YZ
+  draw();
+
+  glViewport(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+  lookFrom(0, 1, 0, 0, 0, 1); // XZ
+  draw();
+
+  glViewport(VIEW_WIDTH, 0, VIEW_WIDTH, VIEW_HEIGHT);
+  lookFrom(0, 0, 1, 0, 1, 0); // YZ
+  draw();
+
   glutSwapBuffers();
 }
 
@@ -317,7 +341,7 @@ void idle() {
 int main(int argc, char **argv) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
-  glutInitWindowSize(800, 800);
+  glutInitWindowSize(2 * VIEW_WIDTH, 2 * VIEW_HEIGHT);
   glutCreateWindow("iso");
 
   init();
