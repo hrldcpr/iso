@@ -43,8 +43,8 @@ void add_cube(int x, int y, int z) {
 }
 
 void add_ball(float x, float y, float z,
-	      unsigned char r, unsigned char g, unsigned char b,
-	      Cube *cube) {
+              unsigned char r, unsigned char g, unsigned char b,
+              Cube *cube) {
   Ball *ball = malloc(sizeof(Ball));
   ball->x = x;
   ball->y = y;
@@ -58,12 +58,12 @@ void add_ball(float x, float y, float z,
 }
 
 void add_ball_at(float x, float y, float z,
-		 unsigned char r, unsigned char g, unsigned char b) {
+                 unsigned char r, unsigned char g, unsigned char b) {
   add_ball(x, y, z, r, g, b, NULL);
 }
 
 void add_ball_on(unsigned char r, unsigned char g, unsigned char b,
-		 Cube *cube) {
+                 Cube *cube) {
   add_ball(cube->x, cube->y, cube->z, r, g, b, cube);
 }
 
@@ -71,8 +71,8 @@ void orthographic() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(-10, 10,
-	  -10, 10,
-	  1, 20);
+          -10, 10,
+          1, 20);
 }
 
 void lookFrom(char cx, char cy, char cz,
@@ -81,9 +81,9 @@ void lookFrom(char cx, char cy, char cz,
   glLoadIdentity();
   float d = 10 / sqrt(cx + cy + cz);
   gluLookAt(d * cx, d * cy, d * cz, // camera position, 10 away from origin
-	    0, 0, 0, // origin is at center
-	    upx, upy, upz  // z-axis is upwards
-	    );
+            0, 0, 0, // origin is at center
+            upx, upy, upz  // z-axis is upwards
+            );
   glRotatef(theta, 0, 0, 1);
 }
 
@@ -222,59 +222,59 @@ void mouse(int button, int state, int u, int v) {
     }
     else if (state == GLUT_UP) {
       if (!dragging) {
-	double model[16], projection[16], x, y, z, near[3], far[3];
-	int viewport[4];
-	float depth;
+        double model[16], projection[16], x, y, z, near[3], far[3];
+        int viewport[4];
+        float depth;
 
         glViewport(0, VIEW_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT);
         lookFrom(1, 1, 1, 0, 0, 1); // isometric
 
-	glGetDoublev(GL_MODELVIEW_MATRIX, model);
-	glGetDoublev(GL_PROJECTION_MATRIX, projection);
-	glGetIntegerv(GL_VIEWPORT, viewport);
+        glGetDoublev(GL_MODELVIEW_MATRIX, model);
+        glGetDoublev(GL_PROJECTION_MATRIX, projection);
+        glGetIntegerv(GL_VIEWPORT, viewport);
 
-	v = 2 * VIEW_HEIGHT - v;
+        v = 2 * VIEW_HEIGHT - v;
 
-	glReadPixels(u, v, 1, 1, // the 1x1 rect at (u,v)
-		     GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        glReadPixels(u, v, 1, 1, // the 1x1 rect at (u,v)
+                     GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 
-	if (depth > 0 && depth < 1) { // not clipped
-	  gluUnProject(u, v, depth,
-		       model, projection, viewport,
-		       &x, &y, &z);
-	}
-	else { // clipped or empty
-	  gluUnProject(u, v, 0,
-		       model, projection, viewport,
-		       near + 0, near + 1, near + 2);
-	  gluUnProject(u, v, 1,
-		       model, projection, viewport,
-		       far + 0, far + 1, far + 2);
-	  intercept(near, far, &x, &y);
-	  z = 0;
-	}
+        if (depth > 0 && depth < 1) { // not clipped
+          gluUnProject(u, v, depth,
+                       model, projection, viewport,
+                       &x, &y, &z);
+        }
+        else { // clipped or empty
+          gluUnProject(u, v, 0,
+                       model, projection, viewport,
+                       near + 0, near + 1, near + 2);
+          gluUnProject(u, v, 1,
+                       model, projection, viewport,
+                       far + 0, far + 1, far + 2);
+          intercept(near, far, &x, &y);
+          z = 0;
+        }
 
-	x = round(x);
-	y = round(y);
-	z = round(z);
-	Cube **prev = &cubes, *next = *prev;
-	while (next) {
-	  if (next->x == x && next->y == y && next->z == z)
-	    break;
-	  prev = &next->next;
-	  next = *prev;
-	}
-	if (next) {// hit
-	  *prev = next->next; // remove from list
-	  Ball *ball = balls;
-	  while(ball) {
-	    if (ball->cube == next)
-	      ball->cube = NULL;
-	    ball = ball->next;
-	  }
-	}
-	else
-	  add_cube(x, y, z);
+        x = round(x);
+        y = round(y);
+        z = round(z);
+        Cube **prev = &cubes, *next = *prev;
+        while (next) {
+          if (next->x == x && next->y == y && next->z == z)
+            break;
+          prev = &next->next;
+          next = *prev;
+        }
+        if (next) {// hit
+          *prev = next->next; // remove from list
+          Ball *ball = balls;
+          while(ball) {
+            if (ball->cube == next)
+              ball->cube = NULL;
+            ball = ball->next;
+          }
+        }
+        else
+          add_cube(x, y, z);
       }
 
       dragging = 0;
@@ -310,27 +310,27 @@ void idle() {
       z = ceil(ball->z); // ball sits at the top of the cube, whereas the cube is z-centered
 
       if (ball->cube) {
-	// balls on cubes move sideways #factoflife
-	ball->x += VELOCITY * dt * 0.001;
-	/* if (x != round(ball->x)) */
-	/*   ball->x += RADIUS; */
+        // balls on cubes move sideways #factoflife
+        ball->x += VELOCITY * dt * 0.001;
+        /* if (x != round(ball->x)) */
+        /*   ball->x += RADIUS; */
       }
       else
-	// balls in space fall #factofspace
-	ball->z -= 10 * VELOCITY * dt * 0.001;
+        // balls in space fall #factofspace
+        ball->z -= 10 * VELOCITY * dt * 0.001;
 
       if (x != round(ball->x) || y != round(ball->y) || z != ceil(ball->z)) {
-	// we moved enough to be on a new cube, so check if we are
-	x = round(ball->x);
-	y = round(ball->y);
-	z = ceil(ball->z);
-	cube = cubes;
-	while (cube) {
-	  if (x == cube->x && y == cube->y && z == cube->z)
-	    break;
-	  cube = cube->next;
-	}
-	ball->cube = cube;
+        // we moved enough to be on a new cube, so check if we are
+        x = round(ball->x);
+        y = round(ball->y);
+        z = ceil(ball->z);
+        cube = cubes;
+        while (cube) {
+          if (x == cube->x && y == cube->y && z == cube->z)
+            break;
+          cube = cube->next;
+        }
+        ball->cube = cube;
       }
 
       ball = ball->next;
